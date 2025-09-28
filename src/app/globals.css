@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #6b7b61;
+  --accent: #d65353;
+  --sand: #efe7dd;
+  --ink: #2f2a26;
+  --background: #ffffff;
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --secondary: #f6bfc6;
+  --secondary-foreground: var(--ink);
+  --muted: #e2ded6;
+  --muted-foreground: #4f4b47;
+  --accent-foreground: #2f2a26;
+  --destructive: #d14e47;
+  --destructive-foreground: #ffffff;
+  --border: #e2ded6;
+  --input: #e2ded6;
+  --ring: rgba(214, 83, 83, 0.35);
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: #1c1a19;
+  --foreground: #f5f1e9;
+  --card: #221f1c;
+  --card-foreground: #f5f1e9;
+  --popover: #221f1c;
+  --popover-foreground: #f5f1e9;
+  --secondary: rgba(245, 240, 230, 0.08);
+  --secondary-foreground: #f5f1e9;
+  --muted: rgba(245, 240, 230, 0.08);
+  --muted-foreground: rgba(245, 240, 230, 0.6);
+  --accent-foreground: #1c1a19;
+  --border: rgba(245, 240, 230, 0.15);
+  --input: rgba(245, 240, 230, 0.15);
+  --ring: rgba(214, 83, 83, 0.5);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', ui-sans-serif, system-ui;
+  }
+}
+
+@keyframes scroll-infinite {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-infinite {
+  animation: scroll-infinite 30s linear infinite;
+}
