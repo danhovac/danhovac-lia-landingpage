@@ -2,6 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import Image from "next/image";
 import SelfAssessmentPopup from "@/components/SelfAssessmentPopup";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,6 @@ import {
   Pill,
   Sparkles,
   LineChart,
-  ChevronRight,
   CalendarDays,
   Hourglass,
   Heart,
@@ -758,13 +758,27 @@ function useCountdown(targetISO: string) {
   return { left, days, hours, minutes, seconds };
 }
 
+type AnalyticsWindow = Window & {
+  dataLayer?: Array<Record<string, unknown>> & {
+    push: (payload: Record<string, unknown>) => number;
+  };
+  gtag?: (command: string, action: string, params: Record<string, unknown>) => void;
+};
+
 function trackOutbound(label: string, url?: string) {
-  try {
-    (window as any).dataLayer?.push({ event: "outbound_click", label, url });
-  } catch {}
-  try {
-    (window as any).gtag?.("event", "click", { event_category: "outbound", event_label: label, value: 1 });
-  } catch {}
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const analyticsWindow = window as AnalyticsWindow;
+  const payload = { event: "outbound_click", label, url };
+
+  analyticsWindow.dataLayer?.push(payload);
+  analyticsWindow.gtag?.("event", "click", {
+    event_category: "outbound",
+    event_label: label,
+    value: 1,
+  });
 }
 
 function goWaitlist() {
@@ -872,18 +886,18 @@ export default function LiaLanding() {
     icon: previewIconMap[item.icon],
   }));
   const featureIcons = [
-    <Pill className="h-7 w-7 text-gray-700" />,
-    <HeartHandshake className="h-7 w-7 text-gray-700" />,
-    <Brain className="h-7 w-7 text-gray-700" />,
+    <Pill key="pill" className="h-7 w-7 text-gray-700" />,
+    <HeartHandshake key="handshake" className="h-7 w-7 text-gray-700" />,
+    <Brain key="brain" className="h-7 w-7 text-gray-700" />,
   ];
   const explainerIconMap: Record<"pill" | "brain", React.ReactNode> = {
     pill: <Pill className="h-4 w-4 text-[#C04E5A]/80" />,
     brain: <Brain className="h-4 w-4 text-[#C04E5A]/80" />,
   };
   const previewDescriptionIcons = [
-    <Brain className="mt-0.5 h-4 w-4 text-[--rouge-600]" />,
-    <Heart className="mt-0.5 h-4 w-4 text-[--rouge-600]" />,
-    <Stethoscope className="mt-0.5 h-4 w-4 text-[--rouge-600]" />,
+    <Brain key="desc-brain" className="mt-0.5 h-4 w-4 text-[--rouge-600]" />,
+    <Heart key="desc-heart" className="mt-0.5 h-4 w-4 text-[--rouge-600]" />,
+    <Stethoscope key="desc-stetho" className="mt-0.5 h-4 w-4 text-[--rouge-600]" />,
   ];
 
   useEffect(() => {
@@ -1326,12 +1340,14 @@ export default function LiaLanding() {
             <div className="md:col-span-2">
               <Card className="rounded-2xl border-black/5 overflow-hidden">
                 <CardContent className="text-sm text-[--ink-900] space-y-4 pt-6">
-                  <div className="aspect-[4/3] w-full rounded-xl overflow-hidden bg-[--sand]">
-                    <img
+                  <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-[--sand]">
+                    <Image
                       src="/thread_profile.jpeg"
                       alt="창업자 프로필"
-                      className="h-full w-full object-cover"
-                      loading="lazy"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      priority={false}
                     />
                   </div>
                   <div>
@@ -1418,7 +1434,7 @@ export default function LiaLanding() {
                             </svg>
                           </div>
                           <blockquote className="text-[--ink-900] text-base leading-relaxed mb-6 font-medium italic">
-                            "{testimonial.quote}"
+                            &ldquo;{testimonial.quote}&rdquo;
                           </blockquote>
                           <div className="text-sm text-[--ink-900] font-medium">
                             — {testimonial.author} ({content.stories.anonymousLabel})
@@ -1752,37 +1768,6 @@ function HeroChip({ children }: { children: React.ReactNode }) {
 
 
 
-
-function EnhancedMiniStat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent: string }) {
-  return (
-    <div className="rounded-2xl border border-black/10 p-4 bg-white/90 hover:bg-white transition-colors">
-      <div className="flex items-center gap-2 text-sm text-[--ink-900] mb-2">
-        <span className="text-[--accent]">{icon}</span>
-        <span className="font-medium">{label}</span>
-      </div>
-      <div className="text-base font-bold text-black/90">
-        {value.replace(accent, `<span class="text-[--accent]">${accent}</span>`).split('<span class="text-[--accent]">').map((part, index) => {
-          if (index === 0) return part;
-          const [accentPart, ...rest] = part.split('</span>');
-          return (
-            <React.Fragment key={index}>
-              <span className="text-[--accent]">{accentPart}</span>
-              {rest.join('</span>')}
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function BadgeEarlyBird() {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700 shadow-sm">
-      감정과 치료 사이, 다리를 놓다
-    </div>
-  );
-}
 
 function Metric({ number, label, hint }: { number: React.ReactNode; label: string; hint?: string }) {
   return (
