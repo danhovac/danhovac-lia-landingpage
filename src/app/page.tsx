@@ -1499,31 +1499,33 @@ export default function LiaLanding() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name" className="text-sm font-semibold text-[--ink-900]">{content.waitlist.nameLabel}</Label>
-                      <Input 
+                      <Input
                         id="name"
-                        type="text" 
-                        placeholder={content.waitlist.namePlaceholder} 
+                        type="text"
+                        name="name"
+                        placeholder={content.waitlist.namePlaceholder}
                         autoComplete="name"
                         value={waitlistForm.name}
                         onChange={(event) =>
                           setWaitlistForm((prev) => ({ ...prev, name: event.target.value }))
                         }
-                        className="rounded-xl h-12 border-[--fog-200] focus:border-[--rouge-600] focus:ring-2 focus:ring-[--rouge-200] transition-all" 
+                        className="rounded-xl h-12 border-[--fog-200] focus:border-[--rouge-600] focus:ring-2 focus:ring-[--rouge-200] transition-all"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-sm font-semibold text-[--ink-900]">{content.waitlist.emailLabel}</Label>
-                      <Input 
+                      <Input
                         id="email"
-                        type="email" 
-                        placeholder={content.waitlist.emailPlaceholder} 
+                        type="email"
+                        name="email"
+                        placeholder={content.waitlist.emailPlaceholder}
                         autoComplete="email"
                         value={waitlistForm.email}
                         onChange={(event) =>
                           setWaitlistForm((prev) => ({ ...prev, email: event.target.value }))
                         }
-                        className="rounded-xl h-12 border-[--fog-200] focus:border-[--rouge-600] focus:ring-2 focus:ring-[--rouge-200] transition-all" 
-                        required 
+                        className="rounded-xl h-12 border-[--fog-200] focus:border-[--rouge-600] focus:ring-2 focus:ring-[--rouge-200] transition-all"
+                        required
                       />
                     </div>
                   </div>
