@@ -26,6 +26,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   },
 });
 
+const waitlistTable = process.env.SUPABASE_WAITLIST_TABLE ?? "Lia_beta_users";
+const waitlistConflictTarget = process.env.SUPABASE_WAITLIST_CONFLICT_TARGET ?? "email";
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
@@ -50,21 +53,43 @@ export async function POST(request: Request) {
       );
     }
 
+    const record: Record<string, unknown> = {
+      email: rawEmail,
+      name: name || null,
+      consent,
+      locale,
+      submitted_at: new Date().toISOString(),
+    };
+
     const { error } = await supabase
-      .from("waitlist")
-      .upsert(
-        {
-          email: rawEmail,
-          name: name || null,
-          consent,
-          locale,
-          submitted_at: new Date().toISOString(),
-        },
-        { onConflict: "email" }
-      );
+      .from(waitlistTable)
+      .upsert(record, { onConflict: waitlistConflictTarget });
 
     if (error) {
-      throw error;
+      if (error.code === "42703") {
+        const minimalRecord: Record<string, unknown> = {
+          email: rawEmail,
+          name: name || null,
+        };
+
+        const { error: minimalError } = await supabase
+          .from(waitlistTable)
+          .upsert(minimalRecord, { onConflict: waitlistConflictTarget });
+
+        if (minimalError && minimalError.code !== "23505") {
+          throw minimalError;
+        }
+      } else if (error.code === "PGRST204") {
+        const { error: insertError } = await supabase
+          .from(waitlistTable)
+          .insert(record);
+
+        if (insertError && insertError.code !== "23505") {
+          throw insertError;
+        }
+      } else if (error.code !== "23505") {
+        throw error;
+      }
     }
 
     return NextResponse.json({ success: true }, { status: 201 });
