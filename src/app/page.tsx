@@ -851,6 +851,8 @@ export default function LiaLanding() {
   const [previewTab, setPreviewTab] = useState<"bridge" | "description">("bridge");
   const [waitlistForm, setWaitlistForm] = useState({ name: "", email: "", consent: false });
   const [showWaitlistSuccess, setShowWaitlistSuccess] = useState(false);
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   useIsomorphicLayoutEffect(() => {
@@ -866,13 +868,46 @@ export default function LiaLanding() {
     setCurrentLocale(next);
     persistLocale(next);
   };
-  const handleWaitlistSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleWaitlistSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!waitlistForm.email || !waitlistForm.consent) {
+    if (!waitlistForm.email || !waitlistForm.consent || waitlistSubmitting) {
       return;
     }
-    setShowWaitlistSuccess(true);
-    setWaitlistForm({ name: "", email: "", consent: false });
+
+    setWaitlistError(null);
+    setWaitlistSubmitting(true);
+
+    try {
+      const response = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: waitlistForm.name,
+          email: waitlistForm.email,
+          consent: waitlistForm.consent,
+          locale: currentLocale,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(data?.message ?? "대기자 명단 저장에 실패했습니다.");
+      }
+
+      setShowWaitlistSuccess(true);
+      setWaitlistForm({ name: "", email: "", consent: false });
+    } catch (error) {
+      console.error("waitlist submit error", error);
+      setWaitlistError(
+        error instanceof Error
+          ? error.message
+          : "대기자 명단 저장 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+      );
+    } finally {
+      setWaitlistSubmitting(false);
+    }
   };
   const dismissWaitlistSuccess = () => setShowWaitlistSuccess(false);
   const previewIconMap: Record<BridgePreviewItemCopy["icon"], React.ReactNode> = {
@@ -1468,6 +1503,7 @@ export default function LiaLanding() {
                         id="name"
                         type="text" 
                         placeholder={content.waitlist.namePlaceholder} 
+                        autoComplete="name"
                         value={waitlistForm.name}
                         onChange={(event) =>
                           setWaitlistForm((prev) => ({ ...prev, name: event.target.value }))
@@ -1481,6 +1517,7 @@ export default function LiaLanding() {
                         id="email"
                         type="email" 
                         placeholder={content.waitlist.emailPlaceholder} 
+                        autoComplete="email"
                         value={waitlistForm.email}
                         onChange={(event) =>
                           setWaitlistForm((prev) => ({ ...prev, email: event.target.value }))
@@ -1507,6 +1544,15 @@ export default function LiaLanding() {
                       </Label>
                     </div>
                   </div>
+
+                  {waitlistError && (
+                    <div
+                      role="alert"
+                      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                    >
+                      {waitlistError}
+                    </div>
+                  )}
                   
                   <div className="flex justify-center">
                     <button
@@ -1518,13 +1564,45 @@ export default function LiaLanding() {
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(0.95)"}
                       onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
-                      disabled={!waitlistForm.email || !waitlistForm.consent}
+                      disabled={!waitlistForm.email || !waitlistForm.consent || waitlistSubmitting}
                     >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L11 13" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M22 2l-7 20-4-9-9-4 20-7z" />
-                    </svg>
-                    {content.waitlist.button}
+                    {waitlistSubmitting ? (
+                      <svg
+                        className="h-5 w-5 animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          d="M4 12a8 8 0 018-8"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                        ></path>
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L11 13" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M22 2l-7 20-4-9-9-4 20-7z" />
+                      </svg>
+                    )}
+                    {waitlistSubmitting ? "저장 중..." : content.waitlist.button}
                     </button>
                   </div>
                 </form>
